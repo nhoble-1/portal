@@ -11,4 +11,6 @@ dj-database-url==2.2.0
 
 # WSGI server
 gunicorn==22.0.0
-WeasyPrint==61.2
+
+# PDF generation
+reportlab==4.2.2

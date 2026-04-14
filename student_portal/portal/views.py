@@ -28,8 +28,7 @@ from .models import (
 from .forms import StudentRegistrationForm, StudentProfileForm, FeePaymentForm
 
 
-# Colour palette (matches portal branding)
-
+# Colour palette 
 NAVY   = colors.HexColor('#1a3a5c')
 GOLD   = colors.HexColor('#c8952a')
 LGREY  = colors.HexColor('#f4f6fb')
@@ -38,9 +37,7 @@ WHITE  = colors.white
 BLACK  = colors.black
 
 
-
 # PDF helpers
-
 def _pdf_styles():
     base = getSampleStyleSheet()
     return {
@@ -114,7 +111,7 @@ def _build_result_slip_pdf(profile, level, semester_label, course_data,
     s      = _pdf_styles()
     story  = []
 
-    # Header 
+    #  Header 
     story.append(Paragraph('UNIQUE OPEN UNIVERSITY', s['uni']))
     story.append(Spacer(1, 5))
     story.append(Paragraph('Student Result Management System', s['subtitle']))
@@ -247,7 +244,7 @@ def _build_transcript_pdf(profile, transcript_data, cgpa, classification, genera
         ('LEFTPADDING',   (0, 0), (-1, -1), 6),
     ]))
     story.append(info_table)
-    story.append(Spacer(1, 15))
+    story.append(Spacer(1, 12))
 
     #  Per-semester result sections 
     headers = [['Course Code', 'Course Title', 'Credit', 'Score', 'Grade', 'GP']]
@@ -287,7 +284,7 @@ def _build_transcript_pdf(profile, transcript_data, cgpa, classification, genera
     story.append(summary_table)
     story.append(Spacer(1, 20))
 
-    # Footer 
+    #  Footer 
     story.append(HRFlowable(width='100%', thickness=0.5, color=colors.HexColor('#cbd5e1')))
     story.append(Spacer(1, 4))
     story.append(Paragraph(
@@ -300,16 +297,13 @@ def _build_transcript_pdf(profile, transcript_data, cgpa, classification, genera
     return buf.getvalue()
 
 
-
 # Helpers
-
 def _get_profile_or_none(request):
     """Return the student profile or None if not found."""
     try:
         return request.user.student_profile
     except StudentProfile.DoesNotExist:
         return None
-
 
 
 # Public views
@@ -328,26 +322,31 @@ def register_view(request):
     if request.method == 'POST':
         form = StudentRegistrationForm(request.POST)
         if form.is_valid():
-            user            = form.save(commit=False)
-            user.first_name = form.cleaned_data['first_name']
-            user.last_name  = form.cleaned_data['last_name']
-            user.email      = form.cleaned_data['email']
-            user.save()
+            try:
+                from django.db import transaction
+                with transaction.atomic():
+                    user            = form.save(commit=False)
+                    user.first_name = form.cleaned_data['first_name']
+                    user.last_name  = form.cleaned_data['last_name']
+                    user.email      = form.cleaned_data['email']
+                    user.save()
 
-            current_session  = AcademicSession.objects.filter(is_current=True).first()
-            current_semester = Semester.objects.filter(is_current=True).first()
-            matric           = form.cleaned_data['matric_number']
+                    current_session  = AcademicSession.objects.filter(is_current=True).first()
+                    current_semester = Semester.objects.filter(is_current=True).first()
+                    matric           = form.cleaned_data['matric_number']
 
-            StudentProfile.objects.create(
-                user=user,
-                matric_number=matric,
-                department=form.cleaned_data['department'],
-                current_session=current_session,
-                current_semester=current_semester.semester if current_semester else 'First',
-                entry_year=matric[:2] if len(matric) >= 2 else '',
-            )
-            messages.success(request, 'Registration successful! Please log in.')
-            return redirect('login')
+                    StudentProfile.objects.create(
+                        user=user,
+                        matric_number=matric,
+                        department=form.cleaned_data['department'],
+                        current_session=current_session,
+                        current_semester=current_semester.semester if current_semester else 'First',
+                        entry_year=matric[:2] if len(matric) >= 2 else '',
+                    )
+                messages.success(request, 'Registration successful! Please log in.')
+                return redirect('login')
+            except Exception:
+                messages.error(request, 'Registration failed due to a server error. Please try again.')
     else:
         form = StudentRegistrationForm()
 
@@ -383,9 +382,7 @@ def logout_view(request):
     return redirect('login')
 
 
-
 # Student — profile setup
-
 @never_cache
 @login_required
 @require_http_methods(['GET', 'POST'])
@@ -421,9 +418,7 @@ def complete_profile(request):
     })
 
 
-
 # Student — main dashboard
-
 @never_cache
 @login_required
 def dashboard(request):
@@ -547,9 +542,7 @@ def dashboard(request):
     })
 
 
-
 # Student — fee receipt upload
-
 @never_cache
 @login_required
 @require_http_methods(['GET', 'POST'])
@@ -594,7 +587,6 @@ def upload_fee_receipt(request, fee_id):
         'profile':          profile,
         'existing_payment': existing_payment,
     })
-
 
 
 # Student — semester detail
@@ -647,8 +639,7 @@ def semester_detail(request, level, semester):
     })
 
 
-
-# PDF Generation — ReportLab (pure Python, no system libs)
+# PDF Generation — ReportLab 
 @login_required
 def result_slip_pdf(request, level, semester):
     profile = _get_profile_or_none(request)

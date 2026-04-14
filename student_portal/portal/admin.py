@@ -233,6 +233,6 @@ class CourseAllocationAdmin(admin.ModelAdmin):
 
 
 # Customise admin site header
-admin.site.site_header  = 'UniPortal Administration'
-admin.site.site_title   = 'UniPortal Admin'
-admin.site.index_title  = 'Student Result Management Dashboard'
+admin.site.site_header  = 'UNIQUE OPEN UNIVERSITY'
+admin.site.site_title   = 'Portal Admin'
+admin.site.index_title  = 'Admin Panel'
